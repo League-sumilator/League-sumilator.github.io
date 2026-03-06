@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ligue 1 Simulator</title>
+  <style>
+    :root {
+      --bg: #ececef;
+      --card: #f8f8f9;
+      --line: #d8d8dc;
+      --text: #11151b;
+      --muted: #607080;
+      --brand: #43003d;
+      --brand-2: #6b3365;
+      --active: #4a0050;
+      --ok: #0a7f30;
+      --draw: #777;
+      --bad: #c60000;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: var(--card);
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      color: #fff;
+      background: linear-gradient(115deg, var(--brand), var(--brand) 40%, var(--brand-2));
+    }
+    .back {
+      color: #fff;
+      text-decoration: none;
+      font-size: 36px;
+      line-height: 1;
+    }
+    .league-logo {
+      width: 66px;
+      height: 66px;
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px;
+      object-fit: contain;
+    }
+    .title h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.1;
+    }
+    .title p {
+      margin: 3px 0 0;
+      font-size: 21px;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+    .tab-btn {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 28px;
+      padding: 16px 28px;
+      cursor: pointer;
+      border-bottom: 4px solid transparent;
+    }
+    .tab-btn.active {
+      color: #111;
+      border-bottom-color: var(--active);
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-top: 0;
+      background: #f4f4f5;
+      padding: 14px;
+    }
+    .hidden { display: none; }
+    .match-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .match-controls label { font-weight: 600; }
+    .match-controls select, .match-controls button {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid #c7c7cd;
+      background: #fff;
+      font: inherit;
+    }
+    .match-controls button {
+      background: var(--brand);
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+    }
+    .fixtures {
+      display: grid;
+      gap: 8px;
+    }
+    .fixture {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+    .team {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .team.right { justify-content: flex-end; }
+    .team-name {
+      font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .club-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff;
+      border: 1px solid #ddd;
+      display: block;
+    }
+    .score-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+    .score-box input {
+      width: 46px;
+      height: 32px;
+      border: 1px solid #c9c9cf;
+      border-radius: 8px;
+      text-align: center;
+      font: inherit;
+    }
+    .score-box .dash { color: #666; }
+    .play-btn {
+      height: 32px;
+      border: 0;
+      padding: 0 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #1b7bff;
+      color: #fff;
+      font-weight: 600;
+    }
+    .played-chip {
+      color: #0d6d2c;
+      font-size: 13px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: center;
+      white-space: nowrap;
+      font-size: 17px;
+    }
+    th { color: #4f5e6f; font-weight: 700; }
+    td.team-col, th.team-col {
+      text-align: left;
+      padding-left: 14px;
+    }
+    .team-inline {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .form {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .dot {
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .dot.w { background: var(--ok); }
+    .dot.d { background: var(--draw); }
+    .dot.l { background: var(--bad); }
+    .footer-link {
+      padding: 14px 0 4px;
+    }
+    .footer-link a {
+      text-decoration: none;
+      color: #244e95;
+      font-weight: 700;
+    }
+    @media (max-width: 860px) {
+      .title h1 { font-size: 26px; }
+      .title p { font-size: 16px; }
+      .tab-btn { font-size: 21px; padding: 14px 16px; }
+      .fixture { grid-template-columns: 1fr; justify-items: center; }
+      .team.right { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <a class="back" href="league-simulator.html" aria-label="Back">&#8249;</a>
+      <img class="league-logo" src="https://upload.wikimedia.org/wikipedia/en/5/5f/Ligue1.svg" alt="France Ligue 1 logo">
+      <div class="title">
+        <h1>France Ligue 1</h1>
+        <p>2025-26 Season</p>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Sections">
+      <button id="tabMatches" class="tab-btn active" type="button">MATCHES</button>
+      <button id="tabStandings" class="tab-btn" type="button">STANDINGS</button>
+    </nav>
+
+    <section id="matchesPanel" class="panel">
+      <div class="match-controls">
+        <label for="roundSelect">Matchday:</label>
+        <select id="roundSelect" aria-label="Matchday"></select>
+        <button id="playRoundBtn" type="button">Play Matchday</button>
+        <button id="resetBtn" type="button">Reset Season</button>
+      </div>
+      <div id="fixtures" class="fixtures"></div>
+    </section>
+
+    <section id="standingsPanel" class="panel hidden">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="team-col">Team</th>
+              <th>PTS</th>
+              <th>MP</th>
+              <th>W</th>
+              <th>L</th>
+              <th>D</th>
+              <th>GF</th>
+              <th>GA</th>
+              <th>GD</th>
+              <th>Last 5</th>
+            </tr>
+          </thead>
+          <tbody id="standingsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="panel footer-link"><a href="league-simulator.html">Back to League Hub</a></div>
+  </main>
+
+  <script>
+        const teams = [
+      { id: "PSG", name: "PSG", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/120px-Paris_Saint-Germain_F.C..svg.png" },
+      { id: "ASM", name: "Monaco", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/b/ba/AS_Monaco_FC.svg/120px-AS_Monaco_FC.svg.png" },
+      { id: "OM", name: "Marseille", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/d/d8/Olympique_Marseille_logo.svg/120px-Olympique_Marseille_logo.svg.png" },
+      { id: "LIL", name: "Lille", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3f/Lille_OSC_logo.svg/120px-Lille_OSC_logo.svg.png" },
+      { id: "NIC", name: "Nice", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/2/2e/OGC_Nice_logo.svg/120px-OGC_Nice_logo.svg.png" },
+      { id: "LYO", name: "Lyon", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c6/Olympique_Lyonnais.svg/120px-Olympique_Lyonnais.svg.png" },
+      { id: "LEN", name: "Lens", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/8/8c/RC_Lens_logo.svg/120px-RC_Lens_logo.svg.png" },
+      { id: "REN", name: "Rennes", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Stade_Rennais_FC.svg/120px-Stade_Rennais_FC.svg.png" },
+      { id: "REI", name: "Reims", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/2/29/Stade_de_Reims_logo.svg/120px-Stade_de_Reims_logo.svg.png" },
+      { id: "NTE", name: "Nantes", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/FC_Nantes_logo.svg/120px-FC_Nantes_logo.svg.png" },
+      { id: "STR", name: "Strasbourg", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/8/80/RC_Strasbourg_Alsace_logo.svg/120px-RC_Strasbourg_Alsace_logo.svg.png" },
+      { id: "BRE", name: "Brest", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/1/14/Stade_Brestois_29_logo.svg/120px-Stade_Brestois_29_logo.svg.png" },
+      { id: "MON", name: "Montpellier", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/58/Montpellier_HSC_logo.svg/120px-Montpellier_HSC_logo.svg.png" },
+      { id: "TOU", name: "Toulouse", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Toulouse_FC_logo.svg/120px-Toulouse_FC_logo.svg.png" },
+      { id: "HAV", name: "Le Havre", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/8/86/Le_Havre_AC_logo.svg/120px-Le_Havre_AC_logo.svg.png" },
+      { id: "AJA", name: "Auxerre", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/AJ_Auxerre_logo.svg/120px-AJ_Auxerre_logo.svg.png" },
+      { id: "ANG", name: "Angers", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Angers_SCO_logo.svg/120px-Angers_SCO_logo.svg.png" },
+      { id: "MET", name: "Metz", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/FC_Metz_2021_logo.svg/120px-FC_Metz_2021_logo.svg.png" }
+    ];
+
+    const teamById = Object.fromEntries(teams.map(t => [t.id, t]));
+    const rounds = generateRounds(teams.map(t => t.id));
+    const fixtures = rounds.flatMap((pairs, idx) => pairs.map((p, m) => ({
+      id: `${idx + 1}-${m + 1}`,
+      round: idx + 1,
+      home: p.home,
+      away: p.away,
+      hg: null,
+      ag: null,
+      played: false
+    })));
+
+    const STORAGE_KEY = "league-sim:ligue-1:v1";
+    const standingsBody = document.getElementById("standingsBody");
+    const fixturesBox = document.getElementById("fixtures");
+    const roundSelect = document.getElementById("roundSelect");
+    const playRoundBtn = document.getElementById("playRoundBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const tabMatches = document.getElementById("tabMatches");
+    const tabStandings = document.getElementById("tabStandings");
+    const matchesPanel = document.getElementById("matchesPanel");
+    const standingsPanel = document.getElementById("standingsPanel");
+
+    for (let i = 1; i <= rounds.length; i += 1) {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = `Matchday ${i}`;
+      roundSelect.appendChild(opt);
+    }
+
+    tabMatches.addEventListener("click", () => {
+      tabMatches.classList.add("active");
+      tabStandings.classList.remove("active");
+      matchesPanel.classList.remove("hidden");
+      standingsPanel.classList.add("hidden");
+    });
+
+    tabStandings.addEventListener("click", () => {
+      tabStandings.classList.add("active");
+      tabMatches.classList.remove("active");
+      standingsPanel.classList.remove("hidden");
+      matchesPanel.classList.add("hidden");
+    });
+
+    roundSelect.addEventListener("change", () => {
+      renderFixtures();
+      saveState();
+    });
+
+    playRoundBtn.addEventListener("click", () => {
+      const round = Number(roundSelect.value);
+      fixtures.filter(f => f.round === round && !f.played).forEach(f => {
+        f.hg = Math.floor(Math.random() * 5);
+        f.ag = Math.floor(Math.random() * 5);
+        f.played = true;
+      });
+      refreshAll();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      fixtures.forEach(f => {
+        f.hg = null;
+        f.ag = null;
+        f.played = false;
+      });
+      refreshAll();
+    });
+
+    function generateRounds(ids) {
+      const arr = [...ids];
+      const n = arr.length;
+      const half = n / 2;
+      const firstLeg = [];
+      for (let round = 0; round < n - 1; round += 1) {
+        const pairs = [];
+        for (let i = 0; i < half; i += 1) {
+          let home = arr[i];
+          let away = arr[n - 1 - i];
+          if (round % 2 === 1) {
+            const tmp = home;
+            home = away;
+            away = tmp;
+          }
+          pairs.push({ home, away });
+        }
+        firstLeg.push(pairs);
+        arr.splice(1, 0, arr.pop());
+      }
+      const secondLeg = firstLeg.map(pairs => pairs.map(p => ({ home: p.away, away: p.home })));
+      return [...firstLeg, ...secondLeg];
+    }
+
+    function logoHtml(team) {
+      return `<img class="club-logo" src="${team.logo}" alt="${team.name} logo" onerror="this.style.display='none'"><span>${team.name}</span>`;
+    }
+
+    function renderFixtures() {
+      const round = Number(roundSelect.value);
+      const rows = fixtures.filter(f => f.round === round);
+      fixturesBox.innerHTML = rows.map(f => {
+        const h = teamById[f.home];
+        const a = teamById[f.away];
+        const score = f.played
+          ? `<span class="score-box"><strong>${f.hg}</strong><span class="dash">-</span><strong>${f.ag}</strong><span class="played-chip">Played</span></span>`
+          : `<span class="score-box">
+              <input type="number" min="0" step="1" data-side="home" data-id="${f.id}" value="">
+              <span class="dash">-</span>
+              <input type="number" min="0" step="1" data-side="away" data-id="${f.id}" value="">
+            </span>
+            <button class="play-btn" type="button" data-play="${f.id}">Play</button>`;
+        return `<article class="fixture">
+          <div class="team">${logoHtml(h)}</div>
+          <div>${score}</div>
+          <div class="team right">${logoHtml(a)}</div>
+          <div></div>
+        </article>`;
+      }).join("");
+
+      fixturesBox.querySelectorAll("button[data-play]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-play");
+          const homeInput = fixturesBox.querySelector(`input[data-side="home"][data-id="${id}"]`);
+          const awayInput = fixturesBox.querySelector(`input[data-side="away"][data-id="${id}"]`);
+          const hg = Number(homeInput.value);
+          const ag = Number(awayInput.value);
+          if (!Number.isInteger(hg) || !Number.isInteger(ag) || hg < 0 || ag < 0) {
+            alert("Enter valid non-negative score values.");
+            return;
+          }
+          const f = fixtures.find(x => x.id === id);
+          f.hg = hg;
+          f.ag = ag;
+          f.played = true;
+          refreshAll();
+        });
+      });
+    }
+
+    function computeStandings() {
+      const map = {};
+      teams.forEach(t => {
+        map[t.id] = { id: t.id, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0, form: [] };
+      });
+      fixtures.filter(f => f.played).forEach(f => {
+        const home = map[f.home];
+        const away = map[f.away];
+        home.p += 1;
+        away.p += 1;
+        home.gf += f.hg;
+        home.ga += f.ag;
+        away.gf += f.ag;
+        away.ga += f.hg;
+        if (f.hg > f.ag) {
+          home.w += 1; home.pts += 3; home.form.push("w");
+          away.l += 1; away.form.push("l");
+        } else if (f.hg < f.ag) {
+          away.w += 1; away.pts += 3; away.form.push("w");
+          home.l += 1; home.form.push("l");
+        } else {
+          home.d += 1; away.d += 1; home.pts += 1; away.pts += 1;
+          home.form.push("d"); away.form.push("d");
+        }
+      });
+      return Object.values(map)
+        .map(t => ({ ...t, gd: t.gf - t.ga, form: t.form.slice(-5).reverse() }))
+        .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || teamById[a.id].name.localeCompare(teamById[b.id].name));
+    }
+
+    function renderStandings() {
+      const rows = computeStandings();
+      standingsBody.innerHTML = rows.map((r, idx) => {
+        const team = teamById[r.id];
+        const form = [0, 1, 2, 3, 4].map(i => {
+          const v = r.form[i] || "d";
+          const symbol = v === "w" ? "✓" : (v === "l" ? "✕" : "−");
+          return `<span class="dot ${v}">${symbol}</span>`;
+        }).join("");
+        return `<tr>
+          <td>${idx + 1}</td>
+          <td class="team-col"><span class="team-inline"><img class="club-logo" src="${team.logo}" alt="${team.name} logo" onerror="this.style.display='none'"><span>${team.name}</span></span></td>
+          <td>${r.pts}</td>
+          <td>${r.p}</td>
+          <td>${r.w}</td>
+          <td>${r.l}</td>
+          <td>${r.d}</td>
+          <td>${r.gf}</td>
+          <td>${r.ga}</td>
+          <td>${r.gd}</td>
+          <td><span class="form">${form}</span></td>
+        </tr>`;
+      }).join("");
+    }
+
+    function saveState() {
+      const state = {
+        round: roundSelect.value,
+        fixtures: fixtures.map(f => ({ hg: f.hg, ag: f.ag, played: f.played }))
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const state = JSON.parse(raw);
+        if (!Array.isArray(state.fixtures) || state.fixtures.length !== fixtures.length) return false;
+
+        state.fixtures.forEach((saved, idx) => {
+          const match = fixtures[idx];
+          const hg = Number(saved?.hg);
+          const ag = Number(saved?.ag);
+          if (saved?.played && Number.isInteger(hg) && Number.isInteger(ag) && hg >= 0 && ag >= 0) {
+            match.hg = hg;
+            match.ag = ag;
+            match.played = true;
+          } else {
+            match.hg = null;
+            match.ag = null;
+            match.played = false;
+          }
+        });
+
+        const savedRound = Number(state.round);
+        if (Number.isInteger(savedRound) && savedRound >= 1 && savedRound <= rounds.length) {
+          roundSelect.value = String(savedRound);
+        }
+        return true;
+      } catch (_err) {
+        return false;
+      }
+    }
+
+    function refreshAll() {
+      renderFixtures();
+      renderStandings();
+      saveState();
+    }
+
+    if (!loadState()) {
+      roundSelect.value = "1";
+      saveState();
+    }
+    refreshAll();
+  </script>
+</body>
+</html>
